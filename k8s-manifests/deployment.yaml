@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: devops-project-secret
+  namespace: devops
+type: Opaque
+data:
+  password: Y2hhbmdlbWU=
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: devops-project-config
+  namespace: devops
+data:
+  DB_HOST: devops-database-service.devops.svc.cluster.local
+  DB_NAME: devdb
+  DB_USER: devuser
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devops-project-deployment
+  namespace: devops
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: devops-project
+  revisionHistoryLimit: 5
+  progressDeadlineSeconds: 300
+  minReadySeconds: 10
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 2
+  template:
+    metadata:
+      labels:
+        app: devops-project
+    spec:
+      initContainers:
+        - name: wait-for-db
+          image: busybox
+          command: [ 'sh', '-c', 'until nc -z -v -w10 devops-database-service 5432; do sleep 1; done' ]
+      containers:
+        - name: devops-project
+          image: filipsam789/django-products
+          imagePullPolicy: Always
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: devops-project-config
+          env:
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: devops-project-secret
+                  key: password

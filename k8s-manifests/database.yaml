@@ -1,0 +1,85 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: devops-database-secret
+  namespace: devops
+type: Opaque
+data:
+  password: Y2hhbmdlbWU=
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: devops-database-config
+  namespace: devops
+data:
+  POSTGRES_DB: devdb
+  POSTGRES_USER: devuser
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: devops-database-pvc
+  namespace: devops
+  labels:
+    app: postgres
+spec:
+  storageClassName: local-path
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: devops-database
+  namespace: devops
+spec:
+  serviceName: devops-database-service
+  selector:
+    matchLabels:
+      app: postgres
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: postgres
+        namespace: devops
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:13-alpine
+          envFrom:
+            - configMapRef:
+                name: devops-database-config
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: devops-database-secret
+                  key: password
+          volumeMounts:
+            - name: devops-database-data
+              mountPath: /var/lib/postgresql/data
+          ports:
+            - containerPort: 5432
+              name: postgres-port
+      volumes:
+        - name: devops-database-data
+          persistentVolumeClaim:
+            claimName: devops-database-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: devops-database-service
+  namespace: devops
+spec:
+  selector:
+    app: postgres
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432

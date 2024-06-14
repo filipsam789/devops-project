@@ -20,7 +20,7 @@ class Product(models.Model):
     description = models.TextField()
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
-    image = models.ImageField(upload_to='images/')
+    image = models.CharField(max_length=255)
     price = models.IntegerField()
     quantity = models.IntegerField()
 
