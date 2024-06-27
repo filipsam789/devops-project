@@ -1,4 +1,4 @@
-name: Test and Build and Push Docker Image
+name: Test code, build and push Docker image and notify Slack channel
 on:
   push:
     branches:
@@ -64,3 +64,16 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/django-products
+  slack:
+    if: always()
+    needs: docker
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Slack
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL }}
+          SLACK_USERNAME: ${{ secrets.SLACK_USERNAME }}
+          SLACK_COLOR: ${{ job.status }}
+          SLACK_MESSAGE: 'Tests passed and Docker build and push is successful!'
