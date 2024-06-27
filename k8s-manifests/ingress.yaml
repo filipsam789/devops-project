@@ -4,10 +4,12 @@ metadata:
   name: devops-project-ingress
   namespace: devops
   annotations:
-    ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
 spec:
+  ingressClassName: nginx
   rules:
-    - http:
+    - host: products.application.com
+      http:
         paths:
         - path: /
           pathType: Prefix
