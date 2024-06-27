@@ -65,7 +65,6 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/django-products
   slack:
-    if: always()
     needs: docker
     runs-on: ubuntu-latest
     steps:
