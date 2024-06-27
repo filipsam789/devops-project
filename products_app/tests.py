@@ -19,7 +19,7 @@ class CategoryUpdateTestCase(TestCase):
 
     def test_category_update(self):
         self.category.name = "UpdatedCategory"
-        self.category.active = True
+        self.category.active = False
         self.category.description = "UpdatedDescription"
         self.category.save()
 
